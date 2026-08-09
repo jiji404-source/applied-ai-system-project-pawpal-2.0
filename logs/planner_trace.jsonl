@@ -14,3 +14,13 @@
 {"stage": "critique", "model": "claude-opus-5", "effort": "medium", "schema": "Critique", "ok": true, "stop_reason": "end_turn", "input_tokens": 3363, "output_tokens": 2104, "elapsed_s": 26.917}
 {"stage": "screen", "model": "claude-opus-5", "effort": "medium", "schema": "SafetyVerdict", "ok": true, "stop_reason": "end_turn", "input_tokens": 1688, "output_tokens": 181, "elapsed_s": 3.487}
 {"stage": "smoke_test", "model": "claude-opus-5", "effort": "medium", "schema": "SafetyVerdict", "ok": true, "stop_reason": "end_turn", "input_tokens": 481, "output_tokens": 57, "elapsed_s": 3.435}
+{"stage": "screen", "model": "claude-opus-5", "effort": "medium", "schema": "SafetyVerdict", "ok": true, "stop_reason": "end_turn", "input_tokens": 1663, "output_tokens": 142, "elapsed_s": 3.204}
+{"stage": "propose", "model": "claude-opus-5", "effort": "medium", "schema": "CarePlan", "ok": true, "stop_reason": "end_turn", "input_tokens": 2436, "output_tokens": 1312, "elapsed_s": 17.331}
+{"stage": "critique", "model": "claude-opus-5", "effort": "medium", "schema": "Critique", "ok": true, "stop_reason": "end_turn", "input_tokens": 2820, "output_tokens": 1213, "elapsed_s": 17.381}
+{"stage": "revise", "model": "claude-opus-5", "effort": "medium", "schema": "CarePlan", "ok": true, "stop_reason": "end_turn", "input_tokens": 3432, "output_tokens": 1730, "elapsed_s": 22.685}
+{"stage": "critique", "model": "claude-opus-5", "effort": "medium", "schema": "Critique", "ok": true, "stop_reason": "end_turn", "input_tokens": 3168, "output_tokens": 1877, "elapsed_s": 25.406}
+{"stage": "screen", "model": "claude-opus-5", "effort": "medium", "schema": "SafetyVerdict", "ok": true, "stop_reason": "end_turn", "input_tokens": 1663, "output_tokens": 139, "elapsed_s": 2.922}
+{"stage": "propose", "model": "claude-opus-5", "effort": "medium", "schema": "CarePlan", "ok": true, "stop_reason": "end_turn", "input_tokens": 2436, "output_tokens": 1414, "elapsed_s": 19.197}
+{"stage": "critique", "model": "claude-opus-5", "effort": "medium", "schema": "Critique", "ok": true, "stop_reason": "end_turn", "input_tokens": 2846, "output_tokens": 1773, "elapsed_s": 22.236}
+{"stage": "revise", "model": "claude-opus-5", "effort": "medium", "schema": "CarePlan", "ok": true, "stop_reason": "end_turn", "input_tokens": 3783, "output_tokens": 1751, "elapsed_s": 21.769}
+{"stage": "critique", "model": "claude-opus-5", "effort": "medium", "schema": "Critique", "ok": true, "stop_reason": "end_turn", "input_tokens": 3144, "output_tokens": 1614, "elapsed_s": 21.029}

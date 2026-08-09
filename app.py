@@ -15,9 +15,26 @@ def display_time(hhmm: str) -> str:
     """
     return datetime.strptime(hhmm, "%H:%M").strftime("%I:%M %p").lstrip("0")
 
+
+st.set_page_config(page_title="PawPal+", page_icon="🐾", layout="wide")
+
+# Design tokens mirror .streamlit/config.toml's theme (terracotta on warm cream) and
+# add the one thing that theme doesn't cover: an earthy sage for "all clear" states,
+# so the palette has a calm green alongside its terracotta the way Bond Vet's does.
 st.markdown("""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap');
+
+:root {
+    --pp-terracotta: #C65338;
+    --pp-terracotta-bg: #F5DFD5;
+    --pp-sage: #5B7A52;
+    --pp-sage-bg: #E3EBDC;
+    --pp-card: #FFFDF9;
+    --pp-border: #E7D9C6;
+    --pp-text: #0B0A0A;
+    --pp-text-muted: #8A7C68;
+}
 
 html, body, [class*="css"] {
     font-family: 'Manrope', sans-serif;
@@ -25,35 +42,95 @@ html, body, [class*="css"] {
 
 h1, h2, h3 {
     font-weight: 800;
-    color: #0B0A0A;
+    color: var(--pp-text);
+    letter-spacing: -0.01em;
 }
 
-/* Rounded primary buttons */
+[data-testid="stCaptionContainer"] { color: var(--pp-text-muted); }
+
+/* Hero */
+.pp-hero { display: flex; align-items: baseline; gap: 12px; margin-bottom: 2px; }
+.pp-hero-accent { width: 44px; height: 6px; background: var(--pp-terracotta); border-radius: 6px; margin: 10px 0 22px 0; }
+
+/* Buttons */
 .stButton > button {
     border-radius: 24px;
     font-family: 'Manrope', sans-serif;
     font-weight: 700;
+    transition: transform 0.06s ease;
 }
+.stButton > button:active { transform: scale(0.98); }
 
-/* Sidebar styling */
+/* Sidebar */
 [data-testid="stSidebar"] {
-    background-color: #F2E7DF;
-    border-right: 1px solid #e0d6cb;
+    border-right: 1px solid var(--pp-border);
 }
 
-/* Tab styling */
+/* Tabs */
 [data-testid="stTabs"] button {
     font-family: 'Manrope', sans-serif;
     font-weight: 600;
 }
 
 /* Metric cards */
-[data-testid="stMetric"] {
-    background-color: #FDFDFD;
-    border-radius: 12px;
-    padding: 12px;
-    border: 1px solid #e0d6cb;
+[data-testid="stMetric"], .pp-metric-card {
+    background-color: var(--pp-card);
+    border-radius: 14px;
+    padding: 14px 16px;
+    border: 1px solid var(--pp-border);
 }
+.pp-metric-card { margin-bottom: 1rem; }
+
+/* Bordered containers used as task cards */
+div[data-testid="stVerticalBlockBorderWrapper"] {
+    border-radius: 16px !important;
+    border-color: var(--pp-border) !important;
+    background-color: var(--pp-card);
+}
+
+/* Alerts: keep Streamlit's semantic colors, just round them to match the system */
+[data-testid="stAlert"] { border-radius: 14px; }
+
+/* Pills */
+.pp-pill {
+    display: inline-block;
+    padding: 3px 12px;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 700;
+}
+.pp-pill-sage { background: var(--pp-sage-bg); color: var(--pp-sage); }
+.pp-pill-terracotta { background: var(--pp-terracotta-bg); color: var(--pp-terracotta); }
+.pp-pill-muted { background: #F0EAE0; color: var(--pp-text-muted); }
+
+/* Rule-citation tags */
+.pp-tag {
+    display: inline-block;
+    padding: 2px 9px;
+    margin: 2px 4px 2px 0;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    background: #F0EAE0;
+    color: var(--pp-text-muted);
+    letter-spacing: 0.01em;
+}
+
+/* Task card internals */
+.pp-time { font-weight: 800; color: var(--pp-terracotta); min-width: 78px; display: inline-block; }
+.pp-desc { font-weight: 600; color: var(--pp-text); }
+.pp-meta { color: var(--pp-text-muted); font-size: 0.85rem; }
+
+/* Empty state */
+.pp-empty {
+    text-align: center;
+    padding: 36px 16px;
+    color: var(--pp-text-muted);
+    background: var(--pp-card);
+    border: 1px dashed var(--pp-border);
+    border-radius: 16px;
+}
+.pp-empty-icon { font-size: 2rem; margin-bottom: 6px; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -63,9 +140,9 @@ if "owner" not in st.session_state:
 owner = st.session_state.owner
 scheduler = Scheduler(owner)
 
-st.set_page_config(page_title="PawPal+", page_icon="🐾", layout="wide")
-st.title("🐾 PawPal+")
-st.caption("Smart pet care management system")
+st.markdown('<div class="pp-hero"><h1>🐾 PawPal+</h1></div>', unsafe_allow_html=True)
+st.caption("Smart pet care management, with an AI layer that shows its work.")
+st.markdown('<div class="pp-hero-accent"></div>', unsafe_allow_html=True)
 
 # ── Sidebar: Owner name + Add Pet ──────────────────────────────────────────
 with st.sidebar:
@@ -102,11 +179,23 @@ with st.sidebar:
         st.divider()
         st.subheader("Your Pets")
         for p in owner.pets:
-            st.write(f"**{p.name}** — {p.species}" + (f", {p.breed}" if p.breed else ""))
+            subtitle = p.species + (f" · {p.breed}" if p.breed else "")
+            st.markdown(
+                f"""<div style="background:var(--pp-card); border:1px solid var(--pp-border);
+                border-radius:12px; padding:8px 12px; margin-bottom:8px;">
+                <span style="font-weight:700;">🐾 {p.name}</span><br/>
+                <span class="pp-meta">{subtitle}</span>
+                </div>""",
+                unsafe_allow_html=True,
+            )
 
 # ── Main area ──────────────────────────────────────────────────────────────
 if not owner.pets:
-    st.info("Start by adding a pet in the sidebar.")
+    st.markdown(
+        """<div class="pp-empty"><div class="pp-empty-icon">🐾</div>
+        Start by adding a pet in the sidebar.</div>""",
+        unsafe_allow_html=True,
+    )
     st.stop()
 
 tab1, tab2, tab3, tab4 = st.tabs(
@@ -157,7 +246,11 @@ with tab2:
 
     schedule = scheduler.get_daily_schedule()
     if not schedule:
-        st.info("No tasks scheduled for today. Add some in the 'Add Task' tab.")
+        st.markdown(
+            """<div class="pp-empty"><div class="pp-empty-icon">📋</div>
+            No tasks scheduled for today. Add some in the "Add Task" tab.</div>""",
+            unsafe_allow_html=True,
+        )
     else:
         total     = len(scheduler.filter_tasks())
         pending   = len(scheduler.filter_tasks(completed=False))
@@ -170,18 +263,23 @@ with tab2:
 
         st.divider()
         st.caption(f"{len(schedule)} task(s) today — sorted earliest to latest")
-        st.table([
-            {
-                "Time":      display_time(t.time),
-                "Pet":       t.pet_name,
-                "Task":      t.description,
-                "Frequency": t.frequency,
-                "Status":    "✅ Done" if t.completed else "🕐 Pending",
-            }
-            for t in schedule
-        ])
 
-# ── Tab 3: Manage Tasks ────────────────────────────────────────────────────
+        for t in schedule:
+            with st.container(border=True):
+                status_pill = (
+                    '<span class="pp-pill pp-pill-sage">✓ Done</span>'
+                    if t.completed
+                    else '<span class="pp-pill pp-pill-terracotta">Pending</span>'
+                )
+                st.markdown(
+                    f"""<span class="pp-time">{display_time(t.time)}</span>
+                    &nbsp;&nbsp;<span class="pp-desc">{t.description}</span>
+                    &nbsp;&nbsp;<span class="pp-meta">🐾 {t.pet_name} · {t.frequency}</span>
+                    &nbsp;&nbsp;{status_pill}""",
+                    unsafe_allow_html=True,
+                )
+
+# ── Tab 3: Manage Tasks ─────────────────────────────────────────────────────
 with tab3:
     st.header("Manage Tasks")
 
@@ -199,29 +297,35 @@ with tab3:
     )
 
     if not filtered:
-        st.info("No tasks match this filter.")
+        st.markdown(
+            '<div class="pp-empty"><div class="pp-empty-icon">🔍</div>No tasks match this filter.</div>',
+            unsafe_allow_html=True,
+        )
     else:
         st.caption(f"{len(filtered)} task(s) found — sorted by time")
         for i, task in enumerate(filtered):
-            col_btn, col_time, col_pet, col_desc, col_freq = st.columns([1, 1, 1, 3, 1])
-            with col_time:
-                st.write(f"🕐 **{display_time(task.time)}**")
-            with col_pet:
-                st.write(f"🐾 {task.pet_name}")
-            with col_desc:
-                st.write(task.description)
-            with col_freq:
-                st.caption(task.frequency)
-            with col_btn:
-                if not task.completed:
-                    if st.button("✓ Done", key=f"complete_{i}"):
-                        pet = next(p for p in owner.pets if p.name == task.pet_name)
-                        scheduler.mark_task_complete(task, pet)
-                        st.rerun()
-                else:
-                    st.success("✅ Done")
+            with st.container(border=True):
+                col_desc, col_btn = st.columns([5, 1])
+                with col_desc:
+                    st.markdown(
+                        f"""<span class="pp-time">{display_time(task.time)}</span>
+                        &nbsp;&nbsp;<span class="pp-desc">{task.description}</span>
+                        &nbsp;&nbsp;<span class="pp-meta">🐾 {task.pet_name} · {task.frequency}</span>""",
+                        unsafe_allow_html=True,
+                    )
+                with col_btn:
+                    if not task.completed:
+                        if st.button("✓ Done", key=f"complete_{i}"):
+                            pet = next(p for p in owner.pets if p.name == task.pet_name)
+                            scheduler.mark_task_complete(task, pet)
+                            st.rerun()
+                    else:
+                        st.markdown(
+                            '<span class="pp-pill pp-pill-sage">✓ Done</span>',
+                            unsafe_allow_html=True,
+                        )
 
-# ── Tab 4: AI Care Plan ────────────────────────────────────────────────────
+# ── Tab 4: AI Care Plan ─────────────────────────────────────────────────────
 with tab4:
     st.header("AI Care Plan")
     st.caption(
@@ -267,7 +371,19 @@ with tab4:
             c1, c2, c3 = st.columns(3)
             c1.metric("Confidence", f"{result.confidence:.0%}")
             c2.metric("Review rounds", result.rounds)
-            c3.metric("Reviewer verdict", "Approved" if result.approved else "Issues open")
+            with c3:
+                st.markdown(
+                    '<div class="pp-metric-card">'
+                    '<div class="pp-meta" style="margin-bottom:6px;">Reviewer verdict</div>'
+                    + (
+                        '<span class="pp-pill pp-pill-sage">✓ Approved</span>'
+                        if result.approved
+                        else '<span class="pp-pill pp-pill-terracotta">Issues open</span>'
+                    )
+                    + '</div>',
+                    unsafe_allow_html=True,
+                )
+            st.progress(result.confidence)
 
             if result.confidence < 0.6:
                 st.warning(
@@ -278,18 +394,17 @@ with tab4:
             st.info(plan.summary)
 
             st.subheader("Schedule")
-            st.table(
-                [
-                    {
-                        "Time": display_time(t.time),
-                        "Pet": t.pet_name,
-                        "Task": t.description,
-                        "Why": t.rationale,
-                        "Rules": ", ".join(t.cited_rules) or "—",
-                    }
-                    for t in plan.tasks
-                ]
-            )
+            for t in plan.tasks:
+                with st.container(border=True):
+                    tags = "".join(f'<span class="pp-tag">{r}</span>' for r in t.cited_rules)
+                    st.markdown(
+                        f"""<span class="pp-time">{display_time(t.time)}</span>
+                        &nbsp;&nbsp;<span class="pp-desc">{t.description}</span>
+                        &nbsp;&nbsp;<span class="pp-meta">🐾 {t.pet_name}</span><br/>
+                        <span class="pp-meta">{t.rationale}</span><br/>
+                        {tags}""",
+                        unsafe_allow_html=True,
+                    )
 
             if plan.conflicts_resolved:
                 st.subheader("Conflicts resolved")
