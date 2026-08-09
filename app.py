@@ -1,9 +1,19 @@
 import streamlit as st
-from datetime import date
+from datetime import date, datetime
 from pawpal_system import Task, Pet, Owner, Scheduler
 from pawpal_ai.llm import ClaudeClient
 from pawpal_ai.planner import CarePlanner
 from pawpal_ai.retriever import KnowledgeBase
+
+
+def display_time(hhmm: str) -> str:
+    """Render a stored 24-hour 'HH:MM' as a 12-hour clock time, e.g. '8:00 AM'.
+
+    Tasks are stored and scheduled internally as 24-hour HH:MM (Scheduler.sort_by_time
+    parses it, and the AI planner's schema requires it) — this only affects what the
+    owner sees.
+    """
+    return datetime.strptime(hhmm, "%H:%M").strftime("%I:%M %p").lstrip("0")
 
 st.markdown("""
 <style>
@@ -112,15 +122,25 @@ with tab1:
         selected_pet = st.selectbox("Pet", [p.name for p in owner.pets])
         task_desc    = st.text_input("What needs to happen?", placeholder="e.g. Morning walk")
     with col2:
-        task_time  = st.time_input("Time")
-        frequency  = st.selectbox("Frequency", ["once", "daily", "weekly"])
+        # st.time_input has no 12-hour display option in this Streamlit version, so
+        # the time is built from three plain selectboxes instead.
+        st.write("Time")
+        th1, th2, th3 = st.columns(3)
+        with th1:
+            hour_12 = st.selectbox("Hour", list(range(1, 13)), index=7, label_visibility="collapsed")
+        with th2:
+            minute = st.selectbox("Minute", ["00", "15", "30", "45"], label_visibility="collapsed")
+        with th3:
+            period = st.selectbox("AM/PM", ["AM", "PM"], label_visibility="collapsed")
+        frequency = st.selectbox("Frequency", ["once", "daily", "weekly"])
 
     if st.button("Schedule Task", type="primary"):
         if task_desc.strip():
             pet      = next(p for p in owner.pets if p.name == selected_pet)
-            time_str = task_time.strftime("%H:%M")
+            hour_24  = (hour_12 % 12) + (12 if period == "PM" else 0)
+            time_str = f"{hour_24:02d}:{minute}"
             pet.add_task(Task(task_desc, time_str, frequency, due_date=date.today()))
-            st.success(f"Scheduled '{task_desc}' for {selected_pet} at {time_str}!")
+            st.success(f"Scheduled '{task_desc}' for {selected_pet} at {display_time(time_str)}!")
         else:
             st.error("Please enter a task description.")
 
@@ -152,7 +172,7 @@ with tab2:
         st.caption(f"{len(schedule)} task(s) today — sorted earliest to latest")
         st.table([
             {
-                "Time":      t.time,
+                "Time":      display_time(t.time),
                 "Pet":       t.pet_name,
                 "Task":      t.description,
                 "Frequency": t.frequency,
@@ -185,7 +205,7 @@ with tab3:
         for i, task in enumerate(filtered):
             col_btn, col_time, col_pet, col_desc, col_freq = st.columns([1, 1, 1, 3, 1])
             with col_time:
-                st.write(f"🕐 **{task.time}**")
+                st.write(f"🕐 **{display_time(task.time)}**")
             with col_pet:
                 st.write(f"🐾 {task.pet_name}")
             with col_desc:
@@ -223,7 +243,7 @@ with tab4:
 
     notes = st.text_area(
         "Anything else Claude should know?",
-        placeholder="e.g. I leave for work at 08:30 and get home at 18:00. "
+        placeholder="e.g. I leave for work at 8:30 AM and get home at 6:00 PM. "
         "Mochi's allergy pill was prescribed once daily.",
     )
 
@@ -261,7 +281,7 @@ with tab4:
             st.table(
                 [
                     {
-                        "Time": t.time,
+                        "Time": display_time(t.time),
                         "Pet": t.pet_name,
                         "Task": t.description,
                         "Why": t.rationale,
