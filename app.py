@@ -1,6 +1,9 @@
 import streamlit as st
 from datetime import date
 from pawpal_system import Task, Pet, Owner, Scheduler
+from pawpal_ai.llm import ClaudeClient
+from pawpal_ai.planner import CarePlanner
+from pawpal_ai.retriever import KnowledgeBase
 
 st.markdown("""
 <style>
@@ -96,7 +99,9 @@ if not owner.pets:
     st.info("Start by adding a pet in the sidebar.")
     st.stop()
 
-tab1, tab2, tab3 = st.tabs(["Add Task", "Today's Schedule", "Manage Tasks"])
+tab1, tab2, tab3, tab4 = st.tabs(
+    ["Add Task", "Today's Schedule", "Manage Tasks", "🤖 AI Care Plan"]
+)
 
 # ── Tab 1: Add Task ────────────────────────────────────────────────────────
 with tab1:
@@ -195,3 +200,112 @@ with tab3:
                         st.rerun()
                 else:
                     st.success("✅ Done")
+
+# ── Tab 4: AI Care Plan ────────────────────────────────────────────────────
+with tab4:
+    st.header("AI Care Plan")
+    st.caption(
+        "Claude retrieves vet-care guidance, drafts a schedule, then critiques and "
+        "revises its own work before showing it to you."
+    )
+
+    @st.cache_resource
+    def load_kb():
+        """Parse the knowledge base once per session rather than per rerun."""
+        return KnowledgeBase.load()
+
+    try:
+        kb = load_kb()
+        st.caption(f"Knowledge base: {len(kb)} care rules loaded.")
+    except (FileNotFoundError, ValueError) as exc:
+        st.error(f"Could not load the knowledge base: {exc}")
+        st.stop()
+
+    notes = st.text_area(
+        "Anything else Claude should know?",
+        placeholder="e.g. I leave for work at 08:30 and get home at 18:00. "
+        "Mochi's allergy pill was prescribed once daily.",
+    )
+
+    if st.button("Generate plan", type="primary"):
+        planner = CarePlanner(ClaudeClient(), kb=kb)
+        with st.spinner("Retrieving guidance, drafting, and self-reviewing…"):
+            result = planner.plan_day(owner.pets, notes=notes)
+
+        # Refusals and errors are expected outcomes, not crashes.
+        if result.refused:
+            st.error(f"🛑 {result.refusal_reason}")
+            st.caption(
+                "PawPal+ schedules care, it does not give medical advice. "
+                "Please contact your veterinarian."
+            )
+        elif not result.ok:
+            st.error(f"Could not generate a plan: {result.error}")
+        else:
+            plan = result.plan
+
+            c1, c2, c3 = st.columns(3)
+            c1.metric("Confidence", f"{result.confidence:.0%}")
+            c2.metric("Review rounds", result.rounds)
+            c3.metric("Reviewer verdict", "Approved" if result.approved else "Issues open")
+
+            if result.confidence < 0.6:
+                st.warning(
+                    "Low confidence — read this plan critically and check anything "
+                    "medication-related with your vet."
+                )
+
+            st.info(plan.summary)
+
+            st.subheader("Schedule")
+            st.table(
+                [
+                    {
+                        "Time": t.time,
+                        "Pet": t.pet_name,
+                        "Task": t.description,
+                        "Why": t.rationale,
+                        "Rules": ", ".join(t.cited_rules) or "—",
+                    }
+                    for t in plan.tasks
+                ]
+            )
+
+            if plan.conflicts_resolved:
+                st.subheader("Conflicts resolved")
+                for item in plan.conflicts_resolved:
+                    st.write(f"- {item}")
+
+            if plan.unmet_constraints:
+                st.subheader("Could not be satisfied")
+                for item in plan.unmet_constraints:
+                    st.warning(item)
+
+            # Show the audit trail — this is what makes the plan checkable.
+            with st.expander("How this plan was checked"):
+                st.write(
+                    f"**Retrieved guidance:** {', '.join(result.retrieved_rule_ids) or 'none'}"
+                )
+                if result.invalid_citations:
+                    st.error(
+                        "Claude cited rules that do not exist: "
+                        f"{', '.join(result.invalid_citations)}. Confidence was reduced."
+                    )
+                else:
+                    st.success("All cited rules were verified against the knowledge base.")
+
+                if result.residual_conflicts:
+                    st.warning(
+                        "The conflict detector still sees: "
+                        + "; ".join(result.residual_conflicts)
+                    )
+                else:
+                    st.success("No time conflicts remain in the final plan.")
+
+                for i, critique in enumerate(result.critiques, start=1):
+                    st.markdown(f"**Review round {i}** — {critique.assessment}")
+                    for issue in critique.issues:
+                        st.write(
+                            f"- `{issue.severity}` {issue.task_reference}: {issue.problem} "
+                            f"→ {issue.suggested_fix}"
+                        )
