@@ -13,3 +13,4 @@
 {"stage": "revise", "model": "claude-opus-5", "effort": "medium", "schema": "CarePlan", "ok": true, "stop_reason": "end_turn", "input_tokens": 3800, "output_tokens": 1761, "elapsed_s": 20.733}
 {"stage": "critique", "model": "claude-opus-5", "effort": "medium", "schema": "Critique", "ok": true, "stop_reason": "end_turn", "input_tokens": 3363, "output_tokens": 2104, "elapsed_s": 26.917}
 {"stage": "screen", "model": "claude-opus-5", "effort": "medium", "schema": "SafetyVerdict", "ok": true, "stop_reason": "end_turn", "input_tokens": 1688, "output_tokens": 181, "elapsed_s": 3.487}
+{"stage": "smoke_test", "model": "claude-opus-5", "effort": "medium", "schema": "SafetyVerdict", "ok": true, "stop_reason": "end_turn", "input_tokens": 481, "output_tokens": 57, "elapsed_s": 3.435}
