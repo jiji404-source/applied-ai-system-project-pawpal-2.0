@@ -67,7 +67,7 @@ place to enforce it, depending on where in the pipeline the value is actually pr
   in each case (see the README's Sample Interactions). That's real evidence the
   screen/propose/critique/revise sequence, citation verification, conflict re-checking,
   and confidence scoring work against actual model output, not just the scripted
-  `LLMClient` stand-in the 41-test suite uses (see `tests/test_planner.py`). It is still
+  `LLMClient` stand-in the 46-test suite uses (see `tests/test_planner.py`). It is still
   only three scenarios, hand-picked to exercise the interesting paths — it is not
   evidence the system is robust across the long tail of real inputs an owner might type.
 - **The safety screen is a prompt, not a guarantee.** `SafetyVerdict` refuses on
