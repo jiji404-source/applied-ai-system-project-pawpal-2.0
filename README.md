@@ -20,8 +20,9 @@ every schedule conflict is caught by code, not by asking the model to notice it.
 
 ## Architecture Overview
 
-See [`diagrams/architecture.mmd`](diagrams/architecture.mmd) for the full flowchart.
-In short:
+![System architecture: retrieval, screen, propose, critique/revise loop, verify, score](assets/architecture.png)
+
+Mermaid source: [`diagrams/architecture.mmd`](diagrams/architecture.mmd). In short:
 
 ```
 Owner input -> retrieve guidance (BM25) -> screen (refuse emergencies/dosage Qs)
