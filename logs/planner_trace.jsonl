@@ -1,0 +1,15 @@
+{"stage": "smoke", "model": "claude-opus-5", "effort": "medium", "schema": "SafetyVerdict", "ok": false, "error": "auth", "elapsed_s": 0.169}
+{"stage": "screen", "model": "claude-opus-5", "effort": "medium", "schema": "SafetyVerdict", "ok": false, "error": "auth", "elapsed_s": 0.242}
+{"stage": "screen", "model": "claude-opus-5", "effort": "medium", "schema": "SafetyVerdict", "ok": false, "error": "auth", "elapsed_s": 0.095}
+{"stage": "screen", "model": "claude-opus-5", "effort": "medium", "schema": "SafetyVerdict", "ok": false, "error": "auth", "elapsed_s": 0.092}
+{"stage": "screen", "model": "claude-opus-5", "effort": "medium", "schema": "SafetyVerdict", "ok": true, "stop_reason": "end_turn", "input_tokens": 1764, "output_tokens": 76, "elapsed_s": 5.732}
+{"stage": "propose", "model": "claude-opus-5", "effort": "medium", "schema": "CarePlan", "ok": true, "stop_reason": "end_turn", "input_tokens": 2537, "output_tokens": 1051, "elapsed_s": 17.683}
+{"stage": "critique", "model": "claude-opus-5", "effort": "medium", "schema": "Critique", "ok": true, "stop_reason": "end_turn", "input_tokens": 2727, "output_tokens": 1316, "elapsed_s": 21.69}
+{"stage": "revise", "model": "claude-opus-5", "effort": "medium", "schema": "CarePlan", "ok": true, "stop_reason": "end_turn", "input_tokens": 3397, "output_tokens": 1474, "elapsed_s": 21.76}
+{"stage": "critique", "model": "claude-opus-5", "effort": "medium", "schema": "Critique", "ok": true, "stop_reason": "end_turn", "input_tokens": 3142, "output_tokens": 1212, "elapsed_s": 19.773}
+{"stage": "screen", "model": "claude-opus-5", "effort": "medium", "schema": "SafetyVerdict", "ok": true, "stop_reason": "end_turn", "input_tokens": 1736, "output_tokens": 182, "elapsed_s": 6.307}
+{"stage": "propose", "model": "claude-opus-5", "effort": "medium", "schema": "CarePlan", "ok": true, "stop_reason": "end_turn", "input_tokens": 2509, "output_tokens": 1712, "elapsed_s": 22.566}
+{"stage": "critique", "model": "claude-opus-5", "effort": "medium", "schema": "Critique", "ok": true, "stop_reason": "end_turn", "input_tokens": 3013, "output_tokens": 1572, "elapsed_s": 22.282}
+{"stage": "revise", "model": "claude-opus-5", "effort": "medium", "schema": "CarePlan", "ok": true, "stop_reason": "end_turn", "input_tokens": 3800, "output_tokens": 1761, "elapsed_s": 20.733}
+{"stage": "critique", "model": "claude-opus-5", "effort": "medium", "schema": "Critique", "ok": true, "stop_reason": "end_turn", "input_tokens": 3363, "output_tokens": 2104, "elapsed_s": 26.917}
+{"stage": "screen", "model": "claude-opus-5", "effort": "medium", "schema": "SafetyVerdict", "ok": true, "stop_reason": "end_turn", "input_tokens": 1688, "output_tokens": 181, "elapsed_s": 3.487}
