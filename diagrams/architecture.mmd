@@ -1,0 +1,41 @@
+flowchart TD
+    Owner["Owner<br/>(pets, tasks, free-text notes)"] --> UI["Streamlit UI - app.py<br/>AI Care Plan tab"]
+    UI --> Planner["CarePlanner.plan_day()"]
+
+    subgraph RAG["Retrieval"]
+        KB[("knowledge/*.md<br/>35 rules: feeding, meds, exercise, safety, routine")]
+        Retriever["KnowledgeBase (BM25, stdlib only)"]
+        KB --> Retriever
+    end
+
+    Planner -->|"build_query(pets, notes)"| Retriever
+    Retriever -->|"top-k rules, format_context"| Guidance["Guidance block"]
+
+    Guidance --> Screen["Screen (Claude)<br/>SafetyVerdict: proceed / refuse"]
+    Screen -->|"refuse: emergency or dosage question"| Refusal["Refusal shown to owner<br/>+ 'contact your vet' message"]
+    Screen -->|proceed| Propose["Propose (Claude)<br/>draft CarePlan, cites rule IDs"]
+
+    Propose --> Conflicts["Scheduler.detect_conflicts()<br/>(Module 2 code, reused as a tool)"]
+    Conflicts -->|"verified conflicts, ground truth"| Critique["Critique (Claude)<br/>finds issues, approves or not"]
+
+    Critique -->|"approved, no critical issues"| Verify["Verify"]
+    Critique -->|"issues found and rounds remain"| Revise["Revise (Claude)<br/>corrected CarePlan"]
+    Revise --> Conflicts
+    Critique -->|"revision limit hit"| Verify
+
+    Verify --> CiteCheck["verify_citations()<br/>every cited rule ID checked against KB"]
+    Verify --> ConflictCheck["plan_to_conflicts()<br/>re-run detector on final plan"]
+    CiteCheck --> Score["score_confidence()<br/>model's self-rating, pulled down by<br/>critical issues, invented citations,<br/>residual conflicts"]
+    ConflictCheck --> Score
+
+    Score --> Result["PlanResult<br/>plan + critiques + confidence + audit trail"]
+    Result --> Render["UI renders: schedule, confidence,<br/>review rounds, cited-rule check,<br/>residual-conflict check"]
+    Refusal --> Render
+
+    Render --> Human["Owner (human-in-the-loop)<br/>reads audit trail, low-confidence warning<br/>below 60%, checks meds with a real vet"]
+
+    Trace[("logs/planner_trace.jsonl<br/>every Claude call: stage, tokens,<br/>latency, ok/error")]
+    Screen -.logged to.-> Trace
+    Propose -.logged to.-> Trace
+    Critique -.logged to.-> Trace
+    Revise -.logged to.-> Trace
