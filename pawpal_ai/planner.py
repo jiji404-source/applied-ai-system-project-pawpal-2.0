@@ -195,6 +195,12 @@ def plan_to_conflicts(plan: CarePlan) -> list[str]:
     This is the bridge that makes the rule-based engine a tool inside the agentic loop.
     The proposed tasks are rebuilt as real `Task` objects owned by real `Pet` objects,
     then handed to the untouched `Scheduler.detect_conflicts()`.
+
+    `Task.__post_init__` validates `time`/`frequency` at construction, so a model that
+    returns a malformed time (e.g. "8am" instead of "08:00") raises `ValueError` right
+    here rather than crashing later inside `sort_by_time()`. That task is dropped from
+    the conflict check and logged rather than failing the whole planning run over one
+    bad field — the rest of the plan can still be checked.
     """
     owner = Owner("plan-check")
     pets: dict[str, Pet] = {}
@@ -208,7 +214,7 @@ def plan_to_conflicts(plan: CarePlan) -> list[str]:
             pets[name].add_task(
                 Task(item.description, item.time, "once", due_date=date.today())
             )
-        except (TypeError, ValueError):  # pragma: no cover - defensive
+        except (TypeError, ValueError):
             logger.warning("Skipping malformed task in conflict check: %r", item)
 
     try:

@@ -1,4 +1,7 @@
 from datetime import date, timedelta
+
+import pytest
+
 from pawpal_system import Task, Pet, Owner, Scheduler
 
 
@@ -68,3 +71,28 @@ def test_detect_conflicts_flags_duplicate_times():
 
     # ASSERT: there should be at least one conflict warning
     assert len(conflicts) > 0
+
+
+# --- Input validation at construction time ---
+# A prior review of this project noted that a malformed time string (e.g. "8am") would
+# crash sort_by_time() with an unhelpful error, and that Task didn't validate frequency
+# at all. Task.__post_init__ now guards both at the boundary where a Task is created.
+
+def test_task_rejects_a_malformed_time_string():
+    with pytest.raises(ValueError):
+        Task("Morning walk", "8am", "once")
+
+
+def test_task_rejects_an_out_of_range_time():
+    with pytest.raises(ValueError):
+        Task("Morning walk", "25:00", "once")
+
+
+def test_task_rejects_an_unrecognized_frequency():
+    with pytest.raises(ValueError):
+        Task("Morning walk", "08:00", "hourly")
+
+
+def test_task_accepts_every_valid_frequency():
+    for frequency in ("once", "daily", "weekly"):
+        Task("Morning walk", "08:00", frequency)  # should not raise

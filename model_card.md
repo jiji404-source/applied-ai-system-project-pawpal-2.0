@@ -101,15 +101,22 @@ place to enforce it, depending on where in the pipeline the value is actually pr
 
 ## Testing summary
 
-41 automated tests pass (`python3 -m pytest -q`, ~0.09s), split across:
+46 automated tests pass (`python3 -m pytest -q`, ~0.11s), split across:
 
-- `tests/test_pawpal.py` (5) — Module 2 scheduler behaviors, unchanged.
+- `tests/test_pawpal.py` (9) — the original 5 Module 2 scheduler behaviors, plus 4 new
+  ones added in response to a code review of that base project: `Task` now validates
+  `time` and `frequency` at construction (`Task.__post_init__`) instead of letting a
+  malformed value crash `sort_by_time()` deep inside the scheduler with an unhelpful
+  error. This matters more here than it did in Module 2 — the AI planner reconstructs
+  `Task` objects from model-generated plan data before checking it for conflicts, so a
+  malformed value is a real possibility, not a hypothetical one.
 - `tests/test_retriever.py` — BM25 ranking, rule-ID parsing, citation lookup.
 - `tests/test_planner.py` — the full `screen -> propose -> critique -> revise -> verify
   -> score` loop against a scripted `LLMClient`, including: a critical issue forcing a
   revision round, a plan that never converges within `max_revisions`, a refusal short-
   circuiting before any planning work happens, an invented rule citation reducing
-  confidence, and a residual conflict surviving to the final plan.
+  confidence, a residual conflict surviving to the final plan, and a malformed
+  AI-generated time being skipped (logged, not crashed) by the new validation.
 
 On top of the mocked suite, three real runs against the live API
 (`logs/planner_trace.jsonl`, reproduced in the README) confirmed the loop converges on

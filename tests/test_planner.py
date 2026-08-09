@@ -147,6 +147,19 @@ def test_plan_to_conflicts_returns_nothing_for_a_clean_plan():
     assert plan_to_conflicts(make_plan(times=("08:00", "18:00"))) == []
 
 
+def test_plan_to_conflicts_skips_a_malformed_ai_time_without_crashing():
+    # ARRANGE: the model returned a non-24-hour time string ("8am" instead of "08:00").
+    # PlannedTask itself doesn't validate format (see schemas.py's design note on why),
+    # so this is a realistic case Task.__post_init__ has to catch.
+    plan = make_plan(times=("8am", "18:00"))
+
+    # ACT: the malformed task should be dropped and logged, not raise
+    conflicts = plan_to_conflicts(plan)
+
+    # ASSERT: the one well-formed task remains, alone, so there is nothing to conflict with
+    assert conflicts == []
+
+
 # ------------------------------------------------------- citation verification
 
 

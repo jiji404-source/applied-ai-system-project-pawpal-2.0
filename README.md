@@ -228,15 +228,30 @@ logic at all.
 - **A bounded revision loop (`max_revisions=3`), not "critique until perfect."** If the
   critic and reviser can't converge, the loop returns its best attempt and says so in
   the UI rather than looping indefinitely or silently shipping a still-flawed plan.
+- **`Task` validates `time`/`frequency` at construction, not deep inside the scheduler.**
+  A code review of the Module 2 base project flagged that a malformed time string (e.g.
+  `"8am"` instead of `"08:00"`) would crash `sort_by_time()` with an unhelpful error, and
+  that nothing validated `frequency`. That boundary matters more now than it did in
+  Module 2: the AI planner reconstructs `Task` objects from *model-generated* plan data
+  in `plan_to_conflicts()` before running the deterministic conflict check, so a
+  malformed AI output is a real input, not a hypothetical one. `Task.__post_init__` now
+  raises a clear `ValueError` immediately, and `plan_to_conflicts()` catches it, logs the
+  bad task, and keeps checking the rest of the plan instead of crashing the whole run.
+- **`detect_conflicts()` flagging same-time tasks across different pets is a documented
+  decision, not an oversight.** A code comment on the method now says so explicitly:
+  the detector stays a simple, deterministic fact-finder, and the AI critic is what
+  applies judgment on top (two pets fed at once is usually fine; two simultaneous walks
+  are not).
 
 ## Testing Summary
 
-**41 automated tests pass** (`python3 -m pytest -q`, ~0.09s): 5 for the original Module 2
-scheduler, the rest for BM25 retrieval/rule parsing and the full planner loop against a
-scripted `LLMClient` — including a critical issue forcing a revision, a plan that never
-converges within the round limit, a refusal short-circuiting before planning starts, an
-invented citation reducing confidence, and a residual conflict surviving to the final
-plan.
+**46 automated tests pass** (`python3 -m pytest -q`, ~0.11s): 9 for the Module 2
+scheduler (including 4 new ones for the `Task` validation above), the rest for BM25
+retrieval/rule parsing and the full planner loop against a scripted `LLMClient` —
+including a critical issue forcing a revision, a plan that never converges within the
+round limit, a refusal short-circuiting before planning starts, an invented citation
+reducing confidence, a residual conflict surviving to the final plan, and a malformed
+AI-generated time being skipped rather than crashing the conflict check.
 
 Beyond the mocked suite, the three real end-to-end runs above (captured against the live
 API, traced in `logs/planner_trace.jsonl`) show the loop actually converging: Scenario 1
